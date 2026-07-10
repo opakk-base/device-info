@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="WixToolset.Sdk/4.0.0">
+  <PropertyGroup>
+    <OutputType>Package</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <OutputName>GetDevice</OutputName>
+    <Platform>x64</Platform>
+    <SuppressValidation>false</SuppressValidation>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\src\GetDevice\GetDevice.csproj" />
+  </ItemGroup>
+</Project>

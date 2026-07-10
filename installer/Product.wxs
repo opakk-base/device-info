@@ -1,0 +1,55 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="GetDevice"
+           Language="1033"
+           Version="1.0.0.0"
+           Manufacturer="GetDevice"
+           UpgradeCode="YOUR-GUID-HERE-0000-0000-0000-000000000000">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of GetDevice is already installed." />
+
+    <Media Id="1" Cabinet="Setup.cab" EmbedCab="yes" />
+
+    <Property Id="ARPPRODUCTICON" Value="icon.ico" />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLFOLDER" Name="GetDevice" />
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="GetDevice" />
+      </Directory>
+    </Directory>
+
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Component Id="GetDevice.exe" Bitness="always64" Guid="YOUR-GUID-HERE-0000-0000-0000-000000000001">
+        <File Id="GetDevice.exe" Source="$(var.GetDevice.TargetDir)\GetDevice.exe" KeyPath="yes" />
+      </Component>
+      <Component Id="GetDevice.dll" Bitness="always64" Guid="YOUR-GUID-HERE-0000-0000-0000-000000000002">
+        <File Id="GetDevice.dll" Source="$(var.GetDevice.TargetDir)\GetDevice.dll" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="ApplicationProgramsFolder">
+      <Component Id="Shortcut" Guid="YOUR-GUID-HERE-0000-0000-0000-000000000003">
+        <Shortcut Id="ApplicationStartMenuShortcut"
+                  Name="GetDevice"
+                  Description="GetDevice - Device Information Exporter"
+                  Target="[INSTALLFOLDER]GetDevice.exe"
+                  WorkingDirectory="INSTALLFOLDER" />
+        <RemoveFolder Id="RemoveApplicationProgramsFolder" Directory="ApplicationProgramsFolder" On="uninstall" />
+        <RegistryValue Root="HKCU"
+                       Key="Software\GetDevice"
+                       Name="installed"
+                       Type="integer"
+                       Value="1"
+                       KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <Feature Id="MainFeature" Title="GetDevice" Level="1">
+      <ComponentRef Id="GetDevice.exe" />
+      <ComponentRef Id="GetDevice.dll" />
+      <ComponentRef Id="Shortcut" />
+    </Feature>
+  </Package>
+</Wix>
