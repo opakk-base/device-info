@@ -38,8 +38,7 @@ public class MainViewModel : BaseViewModel
     public ICommand SelectNoneCommand { get; }
     public ICommand OpenSettingsCommand { get; }
     public ICommand RefreshCommand { get; }
-    public ICommand StartApiCommand { get; }
-    public ICommand StopApiCommand { get; }
+    public ICommand ToggleApiCommand { get; }
 
     public bool IsHttpRunning
     {
@@ -52,6 +51,8 @@ public class MainViewModel : BaseViewModel
         get => _httpStatusText;
         set => SetProperty(ref _httpStatusText, value);
     }
+
+    public string HttpToggleText => _isHttpRunning ? "Stop" : "Start";
 
     public event Action? OpenSettingsRequested;
 
@@ -73,12 +74,13 @@ public class MainViewModel : BaseViewModel
         SelectNoneCommand = new RelayCommand(_ => SetAllChecked(false));
         OpenSettingsCommand = new RelayCommand(_ => OpenSettingsRequested?.Invoke());
         RefreshCommand = new RelayCommand(_ => LoadDeviceInfo());
-        StartApiCommand = new RelayCommand(
-            _ => _httpServerService.Start(_configService.Load().HttpPort),
-            _ => !_httpServerService.IsRunning);
-        StopApiCommand = new RelayCommand(
-            _ => _httpServerService.Stop(),
-            _ => _httpServerService.IsRunning);
+        ToggleApiCommand = new RelayCommand(_ =>
+        {
+            if (_httpServerService.IsRunning)
+                _httpServerService.Stop();
+            else
+                _httpServerService.Start(_configService.Load().HttpPort);
+        });
 
         IsHttpRunning = _httpServerService.IsRunning;
         HttpStatusText = _httpServerService.IsRunning
@@ -91,6 +93,7 @@ public class MainViewModel : BaseViewModel
             HttpStatusText = running
                 ? $"localhost:{_configService.Load().HttpPort}"
                 : "Stopped";
+            OnPropertyChanged(nameof(HttpToggleText));
             if (System.Windows.Application.Current is not null)
                 CommandManager.InvalidateRequerySuggested();
         };

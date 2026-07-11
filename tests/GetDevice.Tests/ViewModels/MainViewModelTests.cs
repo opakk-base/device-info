@@ -147,7 +147,7 @@ public class MainViewModelTests
     }
 
     [Fact]
-    public void StartStopApiCommands_ControlServer_AndReflectRunningState()
+    public void ToggleApiCommand_ControlsServer_AndReflectsRunningState()
     {
         var (deviceMock, configMock) = CreateBaseMocks();
         // HttpEnabled defaults to false => no auto-start
@@ -160,25 +160,22 @@ public class MainViewModelTests
             Mock.Of<IPasswordService>(),
             httpMock.Object);
 
-        // Initially stopped: Start enabled, Stop disabled
-        Assert.True(vm.StartApiCommand.CanExecute(null));
-        Assert.False(vm.StopApiCommand.CanExecute(null));
+        // Initially stopped: toggle label is "Start"
+        Assert.Equal("Start", vm.HttpToggleText);
 
-        vm.StartApiCommand.Execute(null);
+        vm.ToggleApiCommand.Execute(null);
         httpMock.Verify(x => x.Start(8080), Times.Once);
 
         // Simulate server starting
         httpMock.Raise(x => x.RunningChanged += null, httpMock.Object, true);
-        Assert.False(vm.StartApiCommand.CanExecute(null));
-        Assert.True(vm.StopApiCommand.CanExecute(null));
+        Assert.Equal("Stop", vm.HttpToggleText);
 
-        vm.StopApiCommand.Execute(null);
+        vm.ToggleApiCommand.Execute(null);
         httpMock.Verify(x => x.Stop(), Times.Once);
 
         // Simulate server stopping
         httpMock.Raise(x => x.RunningChanged += null, httpMock.Object, false);
-        Assert.True(vm.StartApiCommand.CanExecute(null));
-        Assert.False(vm.StopApiCommand.CanExecute(null));
+        Assert.Equal("Start", vm.HttpToggleText);
     }
 
     private static Mock<IHttpServerService> CreateStatefulHttpMock()

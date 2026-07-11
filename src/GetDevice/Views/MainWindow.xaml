@@ -56,12 +56,9 @@
                     </StackPanel>
                 </StatusBarItem>
                 <StatusBarItem>
-                    <Button Content="Start" Command="{Binding StartApiCommand}"
+                    <Button Content="{Binding HttpToggleText}"
+                            Command="{Binding ToggleApiCommand}"
                             Width="60" Margin="10,0,5,0"/>
-                </StatusBarItem>
-                <StatusBarItem>
-                    <Button Content="Stop" Command="{Binding StopApiCommand}"
-                            Width="60"/>
                 </StatusBarItem>
             </StatusBar.Items>
         </StatusBar>

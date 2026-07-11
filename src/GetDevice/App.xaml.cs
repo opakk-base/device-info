@@ -134,8 +134,26 @@ public partial class App : System.Windows.Application
             Visible = true
         };
 
+        var httpService = ServiceProvider.GetRequiredService<IHttpServerService>();
+        var configService = ServiceProvider.GetRequiredService<IConfigService>();
+
         var contextMenu = new System.Windows.Forms.ContextMenuStrip();
         contextMenu.Items.Add("Show", null, (_, _) => ShowLoginForTrayRestore());
+
+        var toggleItem = new System.Windows.Forms.ToolStripMenuItem(
+            httpService.IsRunning ? "Stop Server" : "Start Server",
+            null,
+            (_, _) =>
+            {
+                if (httpService.IsRunning)
+                    httpService.Stop();
+                else
+                    httpService.Start(configService.Load().HttpPort);
+            });
+        contextMenu.Items.Add(toggleItem);
+
+        contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+
         contextMenu.Items.Add("Exit", null, (_, _) =>
         {
             _trayIcon?.Dispose();
@@ -145,7 +163,6 @@ public partial class App : System.Windows.Application
 
         _trayIcon.DoubleClick += (_, _) => ShowLoginForTrayRestore();
 
-        var httpService = ServiceProvider.GetRequiredService<IHttpServerService>();
         _trayIcon.Text = httpService.IsRunning
             ? "GetDevice — HTTP: Running"
             : "GetDevice — HTTP: Stopped";
@@ -154,6 +171,7 @@ public partial class App : System.Windows.Application
             _trayIcon.Text = running
                 ? "GetDevice — HTTP: Running"
                 : "GetDevice — HTTP: Stopped";
+            toggleItem.Text = running ? "Stop Server" : "Start Server";
         };
     }
 
