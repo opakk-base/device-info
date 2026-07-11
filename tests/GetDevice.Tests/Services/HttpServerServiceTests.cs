@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http;
 using GetDevice.Services;
 using Moq;
 
@@ -68,9 +69,11 @@ public class HttpServerServiceTests : IDisposable
         Thread.Sleep(200);
 
         using var client = new HttpClient();
-        var response = await client.GetStringAsync("http://localhost:9194/unknown");
+        using var response = await client.GetAsync("http://localhost:9194/unknown");
 
-        Assert.Contains("not found", response);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("not found", body);
 
         _service.Stop();
     }

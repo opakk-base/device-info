@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace GetDevice;
 
-public partial class App : Application
+public partial class App : System.Windows.Application
 {
     private MainWindow? _mainWindow;
     private LoginWindow? _loginWindow;
@@ -24,6 +24,15 @@ public partial class App : Application
         _serviceProvider = services.BuildServiceProvider();
         ServiceProvider = _serviceProvider;
 
+        var singleInstance = _serviceProvider.GetRequiredService<ISingleInstanceService>();
+        if (!singleInstance.TryAcquire())
+        {
+            Shutdown();
+            return;
+        }
+
+        singleInstance.Activated += () => Dispatcher.Invoke(BringToFront);
+
         ShowLogin();
     }
 
@@ -34,6 +43,7 @@ public partial class App : Application
         services.AddSingleton<IDeviceInfoService, DeviceInfoService>();
         services.AddSingleton<IExportService, ExportService>();
         services.AddSingleton<IHttpServerService, HttpServerService>();
+        services.AddSingleton<ISingleInstanceService, SingleInstanceService>();
 
         services.AddTransient<LoginViewModel>();
         services.AddTransient<MainViewModel>();
@@ -55,19 +65,63 @@ public partial class App : Application
 
         var mainVm = ServiceProvider.GetRequiredService<MainViewModel>();
         _mainWindow = new MainWindow(mainVm);
+        _mainWindow.Closed += (_, _) => _mainWindow = null;
         _mainWindow.Show();
 
         var passwordService = ServiceProvider.GetRequiredService<IPasswordService>();
         if (passwordService.IsDefaultPassword())
         {
-            MessageBox.Show(
+            System.Windows.MessageBox.Show(
                 "You are using the default password '12345678'. Please change it in Settings.",
                 "Security Warning",
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
         }
 
-        SetupTrayIcon();
+        if (_trayIcon == null)
+            SetupTrayIcon();
+    }
+
+    private void BringToFront()
+    {
+        if (_loginWindow != null)
+        {
+            _loginWindow.Show();
+            _loginWindow.WindowState = WindowState.Normal;
+            _loginWindow.Activate();
+            return;
+        }
+
+        if (_mainWindow != null)
+        {
+            _mainWindow.Show();
+            _mainWindow.WindowState = WindowState.Normal;
+            _mainWindow.Activate();
+            return;
+        }
+
+        ShowLoginForTrayRestore();
+    }
+
+    private void ShowLoginForTrayRestore()
+    {
+        var loginVm = ServiceProvider.GetRequiredService<LoginViewModel>();
+        var loginWindow = new LoginWindow(loginVm);
+        loginVm.LoginSucceeded += () =>
+        {
+            if (_mainWindow != null)
+            {
+                _mainWindow.Show();
+                _mainWindow.WindowState = WindowState.Normal;
+                _mainWindow.Activate();
+            }
+            else
+            {
+                ShowMainWindow();
+            }
+            loginWindow.Close();
+        };
+        loginWindow.ShowDialog();
     }
 
     private void SetupTrayIcon()
@@ -81,12 +135,7 @@ public partial class App : Application
         };
 
         var contextMenu = new System.Windows.Forms.ContextMenuStrip();
-        contextMenu.Items.Add("Show", null, (_, _) =>
-        {
-            _mainWindow?.Show();
-            _mainWindow?.WindowState = WindowState.Normal;
-            _mainWindow?.Activate();
-        });
+        contextMenu.Items.Add("Show", null, (_, _) => ShowLoginForTrayRestore());
         contextMenu.Items.Add("Exit", null, (_, _) =>
         {
             _trayIcon?.Dispose();
@@ -94,14 +143,12 @@ public partial class App : Application
         });
         _trayIcon.ContextMenuStrip = contextMenu;
 
-        _trayIcon.DoubleClick += (_, _) =>
-        {
-            _mainWindow?.Show();
-            _mainWindow?.WindowState = WindowState.Normal;
-            _mainWindow?.Activate();
-        };
+        _trayIcon.DoubleClick += (_, _) => ShowLoginForTrayRestore();
 
         var httpService = ServiceProvider.GetRequiredService<IHttpServerService>();
+        _trayIcon.Text = httpService.IsRunning
+            ? "GetDevice — HTTP: Running"
+            : "GetDevice — HTTP: Stopped";
         httpService.RunningChanged += (_, running) =>
         {
             _trayIcon.Text = running
@@ -115,6 +162,8 @@ public partial class App : Application
         _trayIcon?.Dispose();
         var httpService = ServiceProvider.GetService<IHttpServerService>();
         httpService?.Stop();
+        var singleInstance = _serviceProvider?.GetService<ISingleInstanceService>();
+        singleInstance?.Release();
         _serviceProvider?.Dispose();
         base.OnExit(e);
     }

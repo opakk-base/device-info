@@ -108,7 +108,7 @@ public class DeviceInfoService : IDeviceInfoService
         var machineSid = GetMachineSid();
         var input = $"{deviceId}:{machineSid}";
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
-        return Convert.ToHexStringLower(bytes);
+        return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 
     private static string GetMachineSid()

@@ -21,4 +21,7 @@ public class AppConfig
 
     [JsonPropertyName("checked_fields")]
     public List<string> CheckedFields { get; set; } = new();
+
+    [JsonPropertyName("minimize_to_tray_on_close")]
+    public bool MinimizeToTrayOnClose { get; set; } = true;
 }

@@ -1,3 +1,4 @@
+using System.IO;
 using GetDevice.Models;
 using GetDevice.Services;
 
@@ -53,6 +54,6 @@ public class ConfigServiceTests
     public void ComputeSha256_ReturnsExpectedHash()
     {
         var hash = ConfigService.ComputeSha256("12345678");
-        Assert.Equal("ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64d", hash);
+        Assert.Equal("ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f", hash);
     }
 }

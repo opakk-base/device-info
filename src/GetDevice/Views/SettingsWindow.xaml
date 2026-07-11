@@ -1,17 +1,33 @@
 <Window x:Class="GetDevice.Views.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:cvt="clr-namespace:GetDevice.Converters"
         xmlns:local="clr-namespace:GetDevice.Views"
         Title="GetDevice - Settings"
-        Width="400" Height="420"
+        Width="400" Height="450"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         WindowStyle="ToolWindow">
     <Window.Resources>
+        <cvt:BoolToGreenRedConverter x:Key="BoolToGreenRed"/>
         <local:PasswordMessageBrushConverter x:Key="BoolToErrorBrush"/>
     </Window.Resources>
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="20">
+    <DockPanel>
+        <StatusBar DockPanel.Dock="Bottom" Margin="0,10,0,0">
+            <StatusBar.Items>
+                <StatusBarItem>
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="10" Height="10"
+                                 Fill="{Binding IsHttpRunning, Converter={StaticResource BoolToGreenRed}}"
+                                 Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding HttpStatusText}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </StatusBarItem>
+            </StatusBar.Items>
+        </StatusBar>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="20">
 
             <!-- Password Change Section -->
             <TextBlock Text="Change Password" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
@@ -29,13 +45,25 @@
 
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Current:" VerticalAlignment="Center"/>
                 <PasswordBox Grid.Row="0" Grid.Column="1" x:Name="CurrentPasswordBox" Height="28"/>
+                <TextBox Grid.Row="0" Grid.Column="1" x:Name="CurrentPasswordTextBox"
+                         Text="{Binding CurrentPassword, UpdateSourceTrigger=PropertyChanged}"
+                         Height="28" Visibility="Collapsed"/>
 
                 <TextBlock Grid.Row="1" Grid.Column="0" Text="New:" VerticalAlignment="Center" Margin="0,5"/>
                 <PasswordBox Grid.Row="1" Grid.Column="1" x:Name="NewPasswordBox" Height="28" Margin="0,5"/>
+                <TextBox Grid.Row="1" Grid.Column="1" x:Name="NewPasswordTextBox"
+                         Text="{Binding NewPassword, UpdateSourceTrigger=PropertyChanged}"
+                         Height="28" Margin="0,5" Visibility="Collapsed"/>
 
                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Confirm:" VerticalAlignment="Center"/>
                 <PasswordBox Grid.Row="2" Grid.Column="1" x:Name="ConfirmPasswordBox" Height="28"/>
+                <TextBox Grid.Row="2" Grid.Column="1" x:Name="ConfirmPasswordTextBox"
+                         Text="{Binding ConfirmPassword, UpdateSourceTrigger=PropertyChanged}"
+                         Height="28" Visibility="Collapsed"/>
             </Grid>
+
+            <CheckBox x:Name="ShowPasswordsCheckBox" Content="Show passwords"
+                      Margin="0,5,0,0"/>
 
             <Button Content="Change Password"
                     Command="{Binding ChangePasswordCommand}"
@@ -60,6 +88,10 @@
                 When enabled, GET /getdevice on localhost:8080 returns filtered device info as JSON.
             </TextBlock>
 
+            <CheckBox Content="Minimize to tray when closing window"
+                      IsChecked="{Binding MinimizeToTrayOnClose}"
+                      Margin="0,0,0,5"/>
+
             <Separator Margin="0,10"/>
 
             <!-- Factory Reset -->
@@ -80,4 +112,5 @@
                     Width="100"/>
         </StackPanel>
     </ScrollViewer>
+    </DockPanel>
 </Window>

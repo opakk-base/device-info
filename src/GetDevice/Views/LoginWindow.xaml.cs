@@ -14,7 +14,10 @@ public partial class LoginWindow : Window
         _viewModel = viewModel;
         DataContext = viewModel;
 
+        PasswordBox.PasswordChanged += (_, _) => _viewModel.Password = PasswordBox.Password;
+
         _viewModel.LoginSucceeded += OnLoginSucceeded;
+        _viewModel.LoginFailed += OnLoginFailed;
 
         if (viewModel.IsFirstLaunch)
         {
@@ -39,9 +42,19 @@ public partial class LoginWindow : Window
         Close();
     }
 
+    private void OnLoginFailed(string message)
+    {
+        System.Windows.MessageBox.Show(
+            message,
+            "Login Failed",
+            MessageBoxButton.OK,
+            MessageBoxImage.Warning);
+    }
+
     protected override void OnClosed(EventArgs e)
     {
         base.OnClosed(e);
         _viewModel.LoginSucceeded -= OnLoginSucceeded;
+        _viewModel.LoginFailed -= OnLoginFailed;
     }
 }

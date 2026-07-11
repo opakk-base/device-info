@@ -6,11 +6,17 @@ namespace GetDevice.ViewModels;
 public class LoginViewModel : BaseViewModel
 {
     private readonly IPasswordService _passwordService;
+    private readonly IConfigService _configService;
+    private readonly IHttpServerService _httpServerService;
     private string _password = string.Empty;
     private string _errorMessage = string.Empty;
     private bool _isFirstLaunch;
+    private bool _isHttpRunning;
+    private string _httpStatusText = string.Empty;
+    private readonly EventHandler<bool> _runningChangedHandler;
 
     public event Action? LoginSucceeded;
+    public event Action<string>? LoginFailed;
 
     public string Password
     {
@@ -30,15 +36,53 @@ public class LoginViewModel : BaseViewModel
         set => SetProperty(ref _isFirstLaunch, value);
     }
 
+    public bool IsHttpRunning
+    {
+        get => _isHttpRunning;
+        set => SetProperty(ref _isHttpRunning, value);
+    }
+
+    public string HttpStatusText
+    {
+        get => _httpStatusText;
+        set => SetProperty(ref _httpStatusText, value);
+    }
+
     public ICommand LoginCommand { get; }
     public ICommand SkipChangePasswordCommand { get; }
 
-    public LoginViewModel(IPasswordService passwordService)
+    public LoginViewModel(IPasswordService passwordService, IConfigService configService, IHttpServerService httpServerService)
     {
         _passwordService = passwordService;
+        _httpServerService = httpServerService;
+        _configService = configService;
+
         LoginCommand = new RelayCommand(ExecuteLogin);
-        SkipChangePasswordCommand = new RelayCommand(_ => LoginSucceeded?.Invoke());
+        SkipChangePasswordCommand = new RelayCommand(_ =>
+        {
+            Unsubscribe();
+            LoginSucceeded?.Invoke();
+        });
         IsFirstLaunch = _passwordService.IsDefaultPassword();
+
+        IsHttpRunning = _httpServerService.IsRunning;
+        HttpStatusText = _httpServerService.IsRunning
+            ? $"localhost:{_configService.Load().HttpPort}"
+            : "Stopped";
+
+        _runningChangedHandler = (_, running) =>
+        {
+            IsHttpRunning = running;
+            HttpStatusText = running
+                ? $"localhost:{_configService.Load().HttpPort}"
+                : "Stopped";
+        };
+        _httpServerService.RunningChanged += _runningChangedHandler;
+    }
+
+    public void Unsubscribe()
+    {
+        _httpServerService.RunningChanged -= _runningChangedHandler;
     }
 
     private void ExecuteLogin(object? parameter)
@@ -52,11 +96,13 @@ public class LoginViewModel : BaseViewModel
         if (_passwordService.Verify(Password))
         {
             ErrorMessage = string.Empty;
+            Unsubscribe();
             LoginSucceeded?.Invoke();
         }
         else
         {
             ErrorMessage = "Incorrect password.";
+            LoginFailed?.Invoke("Incorrect password.");
         }
     }
 }

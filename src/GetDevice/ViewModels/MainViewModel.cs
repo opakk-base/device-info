@@ -26,9 +26,11 @@ public class MainViewModel : BaseViewModel
     private readonly IExportService _exportService;
     private readonly IConfigService _configService;
     private readonly IPasswordService _passwordService;
+    private readonly IHttpServerService _httpServerService;
 
     private DeviceInfo? _deviceInfo;
-    private string _statusText = string.Empty;
+    private bool _isHttpRunning;
+    private string _httpStatusText = string.Empty;
 
     public ObservableCollection<DeviceFieldItem> Fields { get; } = new();
     public ICommand ExportCommand { get; }
@@ -36,11 +38,19 @@ public class MainViewModel : BaseViewModel
     public ICommand SelectNoneCommand { get; }
     public ICommand OpenSettingsCommand { get; }
     public ICommand RefreshCommand { get; }
+    public ICommand StartApiCommand { get; }
+    public ICommand StopApiCommand { get; }
 
-    public string StatusText
+    public bool IsHttpRunning
     {
-        get => _statusText;
-        set => SetProperty(ref _statusText, value);
+        get => _isHttpRunning;
+        set => SetProperty(ref _isHttpRunning, value);
+    }
+
+    public string HttpStatusText
+    {
+        get => _httpStatusText;
+        set => SetProperty(ref _httpStatusText, value);
     }
 
     public event Action? OpenSettingsRequested;
@@ -49,18 +59,44 @@ public class MainViewModel : BaseViewModel
         IDeviceInfoService deviceInfoService,
         IExportService exportService,
         IConfigService configService,
-        IPasswordService passwordService)
+        IPasswordService passwordService,
+        IHttpServerService httpServerService)
     {
         _deviceInfoService = deviceInfoService;
         _exportService = exportService;
         _configService = configService;
         _passwordService = passwordService;
+        _httpServerService = httpServerService;
 
         ExportCommand = new RelayCommand(ExecuteExport);
         SelectAllCommand = new RelayCommand(_ => SetAllChecked(true));
         SelectNoneCommand = new RelayCommand(_ => SetAllChecked(false));
         OpenSettingsCommand = new RelayCommand(_ => OpenSettingsRequested?.Invoke());
         RefreshCommand = new RelayCommand(_ => LoadDeviceInfo());
+        StartApiCommand = new RelayCommand(
+            _ => _httpServerService.Start(_configService.Load().HttpPort),
+            _ => !_httpServerService.IsRunning);
+        StopApiCommand = new RelayCommand(
+            _ => _httpServerService.Stop(),
+            _ => _httpServerService.IsRunning);
+
+        IsHttpRunning = _httpServerService.IsRunning;
+        HttpStatusText = _httpServerService.IsRunning
+            ? $"localhost:{_configService.Load().HttpPort}"
+            : "Stopped";
+
+        _httpServerService.RunningChanged += (_, running) =>
+        {
+            IsHttpRunning = running;
+            HttpStatusText = running
+                ? $"localhost:{_configService.Load().HttpPort}"
+                : "Stopped";
+            if (System.Windows.Application.Current is not null)
+                CommandManager.InvalidateRequerySuggested();
+        };
+
+        if (_configService.Load().HttpEnabled && !_httpServerService.IsRunning)
+            _httpServerService.Start(_configService.Load().HttpPort);
 
         LoadDeviceInfo();
     }
@@ -125,7 +161,5 @@ public class MainViewModel : BaseViewModel
             _deviceInfo = _deviceInfoService.Gather();
 
         await _exportService.ExportToFileAsync(_deviceInfo, dialog.FileName, checkedFields);
-
-        StatusText = $"Exported to {dialog.FileName}";
     }
 }

@@ -11,9 +11,11 @@ public class SettingsViewModelTests
     public void ChangePassword_WithMismatchedNewPasswords_ShowsError()
     {
         var mockPassword = new Mock<IPasswordService>();
+        var mockConfig = new Mock<IConfigService>();
+        mockConfig.Setup(c => c.Load()).Returns(new AppConfig());
         var vm = new SettingsViewModel(
             mockPassword.Object,
-            Mock.Of<IConfigService>(),
+            mockConfig.Object,
             Mock.Of<IHttpServerService>());
 
         vm.CurrentPassword = "old";
@@ -30,10 +32,12 @@ public class SettingsViewModelTests
     {
         var mockPassword = new Mock<IPasswordService>();
         mockPassword.Setup(p => p.Change("old", "newpass123")).Returns(true);
+        var mockConfig = new Mock<IConfigService>();
+        mockConfig.Setup(c => c.Load()).Returns(new AppConfig());
 
         var vm = new SettingsViewModel(
             mockPassword.Object,
-            Mock.Of<IConfigService>(),
+            mockConfig.Object,
             Mock.Of<IHttpServerService>());
 
         vm.CurrentPassword = "old";
@@ -49,10 +53,12 @@ public class SettingsViewModelTests
     public void FactoryReset_CallsResetToDefault()
     {
         var mockPassword = new Mock<IPasswordService>();
+        var mockConfig = new Mock<IConfigService>();
+        mockConfig.Setup(c => c.Load()).Returns(new AppConfig());
 
         var vm = new SettingsViewModel(
             mockPassword.Object,
-            Mock.Of<IConfigService>(),
+            mockConfig.Object,
             Mock.Of<IHttpServerService>());
 
         vm.FactoryResetCommand.Execute(null);

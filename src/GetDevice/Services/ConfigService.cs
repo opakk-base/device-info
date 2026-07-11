@@ -1,3 +1,4 @@
+using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -82,6 +83,6 @@ public class ConfigService : IConfigService
     internal static string ComputeSha256(string input)
     {
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
-        return Convert.ToHexStringLower(bytes);
+        return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 }

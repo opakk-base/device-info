@@ -16,6 +16,9 @@ public class SettingsViewModel : BaseViewModel
     private string _passwordMessage = string.Empty;
     private bool _passwordMessageIsError;
     private bool _isHttpEnabled;
+    private bool _minimizeToTrayOnClose;
+    private bool _isHttpRunning;
+    private string _httpStatusText = string.Empty;
 
     public string CurrentPassword
     {
@@ -66,7 +69,31 @@ public class SettingsViewModel : BaseViewModel
         }
     }
 
-    public bool IsHttpRunning => _httpServerService.IsRunning;
+    public bool IsHttpRunning
+    {
+        get => _isHttpRunning;
+        set => SetProperty(ref _isHttpRunning, value);
+    }
+
+    public string HttpStatusText
+    {
+        get => _httpStatusText;
+        set => SetProperty(ref _httpStatusText, value);
+    }
+
+    public bool MinimizeToTrayOnClose
+    {
+        get => _minimizeToTrayOnClose;
+        set
+        {
+            if (SetProperty(ref _minimizeToTrayOnClose, value))
+            {
+                var config = _configService.Load();
+                config.MinimizeToTrayOnClose = value;
+                _configService.Save(config);
+            }
+        }
+    }
 
     public ICommand ChangePasswordCommand { get; }
     public ICommand FactoryResetCommand { get; }
@@ -89,6 +116,20 @@ public class SettingsViewModel : BaseViewModel
 
         var config = _configService.Load();
         _isHttpEnabled = config.HttpEnabled;
+        _minimizeToTrayOnClose = config.MinimizeToTrayOnClose;
+        _isHttpRunning = _httpServerService.IsRunning;
+        _httpStatusText = _httpServerService.IsRunning
+            ? $"localhost:{config.HttpPort}"
+            : "Stopped";
+
+        _httpServerService.RunningChanged += (_, running) =>
+        {
+            IsHttpRunning = running;
+            var currentConfig = _configService.Load();
+            HttpStatusText = running
+                ? $"localhost:{currentConfig.HttpPort}"
+                : "Stopped";
+        };
     }
 
     private void ExecuteChangePassword(object? parameter)

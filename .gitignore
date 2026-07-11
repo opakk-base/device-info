@@ -1,0 +1,10 @@
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.log
+.DS_Store
+
+.superpowers/
+docs/superpowers/
