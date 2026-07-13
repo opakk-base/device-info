@@ -12,7 +12,6 @@ jobs:
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
       DOTNET_NOLOGO: 1
-      PATH: ${{ env.PATH }};${{ env.HOME }}/.dotnet/tools
 
     steps:
       - name: Checkout
