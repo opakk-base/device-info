@@ -21,6 +21,9 @@
                                  Fill="{Binding IsHttpRunning, Converter={StaticResource BoolToGreenRed}}"
                                  Margin="0,0,6,0" VerticalAlignment="Center"/>
                         <TextBlock Text="{Binding HttpStatusText}" VerticalAlignment="Center"/>
+                        <Button Content="{Binding HttpToggleText}"
+                                Command="{Binding ToggleServerCommand}"
+                                Width="90" Margin="10,0,0,0"/>
                     </StackPanel>
                 </StatusBarItem>
             </StatusBar.Items>
@@ -80,12 +83,24 @@
             <!-- HTTP Server Section -->
             <TextBlock Text="HTTP Server" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
 
-            <CheckBox Content="Enable HTTP endpoint (localhost:8080)"
+            <CheckBox Content="Enable HTTP endpoint"
                       IsChecked="{Binding IsHttpEnabled}"
                       Margin="0,0,0,5"/>
 
-            <TextBlock Foreground="Gray" FontSize="11" TextWrapping="Wrap">
-                When enabled, GET /getdevice on localhost:8080 returns filtered device info as JSON.
+            <Grid Margin="0,0,0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="80"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Port:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBox Grid.Column="1" Text="{Binding HttpPortText, UpdateSourceTrigger=PropertyChanged}"
+                         Height="28" VerticalAlignment="Center"
+                         PreviewTextInput="PortTextBox_PreviewTextInput"/>
+            </Grid>
+
+            <TextBlock Foreground="Gray" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,5">
+                When enabled, GET /getdevice on localhost:<Run Text="{Binding HttpPortText}"/> returns filtered device info as JSON.
             </TextBlock>
 
             <CheckBox Content="Minimize to tray when closing window"

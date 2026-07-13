@@ -63,6 +63,11 @@ public partial class SettingsWindow : Window
         textBox.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    private void PortTextBox_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+    {
+        e.Handled = !int.TryParse(e.Text, out _);
+    }
+
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(SettingsViewModel.CurrentPassword))
