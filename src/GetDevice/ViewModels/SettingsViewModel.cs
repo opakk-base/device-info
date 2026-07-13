@@ -19,6 +19,8 @@ public class SettingsViewModel : BaseViewModel
     private bool _minimizeToTrayOnClose;
     private bool _isHttpRunning;
     private string _httpStatusText = string.Empty;
+    private int _httpPort;
+    private string _httpPortText = string.Empty;
 
     public string CurrentPassword
     {
@@ -95,9 +97,47 @@ public class SettingsViewModel : BaseViewModel
         }
     }
 
+    public int HttpPort
+    {
+        get => _httpPort;
+        set
+        {
+            if (SetProperty(ref _httpPort, value))
+            {
+                var config = _configService.Load();
+                config.HttpPort = value;
+                _configService.Save(config);
+
+                if (_httpServerService.IsRunning)
+                {
+                    _httpServerService.Stop();
+                    _httpServerService.Start(value);
+                }
+            }
+        }
+    }
+
+    public string HttpPortText
+    {
+        get => _httpPortText;
+        set
+        {
+            if (SetProperty(ref _httpPortText, value))
+            {
+                if (int.TryParse(value, out var port) && port >= 1024 && port <= 65535)
+                {
+                    HttpPort = port;
+                }
+            }
+        }
+    }
+
+    public string HttpToggleText => IsHttpRunning ? "Stop Server" : "Start Server";
+
     public ICommand ChangePasswordCommand { get; }
     public ICommand FactoryResetCommand { get; }
     public ICommand CloseCommand { get; }
+    public ICommand ToggleServerCommand { get; }
 
     public event Action? CloseRequested;
 
@@ -113,9 +153,18 @@ public class SettingsViewModel : BaseViewModel
         ChangePasswordCommand = new RelayCommand(ExecuteChangePassword);
         FactoryResetCommand = new RelayCommand(ExecuteFactoryReset);
         CloseCommand = new RelayCommand(_ => CloseRequested?.Invoke());
+        ToggleServerCommand = new RelayCommand(_ =>
+        {
+            if (IsHttpRunning)
+                _httpServerService.Stop();
+            else
+                _httpServerService.Start(HttpPort);
+        });
 
         var config = _configService.Load();
         _isHttpEnabled = config.HttpEnabled;
+        _httpPort = config.HttpPort;
+        _httpPortText = config.HttpPort.ToString();
         _minimizeToTrayOnClose = config.MinimizeToTrayOnClose;
         _isHttpRunning = _httpServerService.IsRunning;
         _httpStatusText = _httpServerService.IsRunning
@@ -129,6 +178,7 @@ public class SettingsViewModel : BaseViewModel
             HttpStatusText = running
                 ? $"localhost:{currentConfig.HttpPort}"
                 : "Stopped";
+            OnPropertyChanged(nameof(HttpToggleText));
         };
     }
 
