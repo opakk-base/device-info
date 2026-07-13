@@ -1,4 +1,4 @@
-name: Release
+name: Build and Release
 
 on:
   push:
@@ -22,7 +22,17 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
-      - name: Install WiX Toolset via dotnet tool
+      - name: Ensure dotnet tools are on PATH
+        shell: pwsh
+        run: |
+          $targetPath = Join-Path $env:USERPROFILE ".dotnet\tools"
+          $current = [Environment]::GetEnvironmentVariable("PATH", "Machine")
+          if ($current -notlike "*$targetPath*") {
+            [Environment]::SetEnvironmentVariable("PATH", "$current;$targetPath", "Machine")
+          }
+          echo "$targetPath" >> $env:GITHUB_PATH
+
+      - name: Install WiX Toolset
         run: dotnet tool install --global wix
 
       - name: Restore app dependencies
@@ -40,29 +50,35 @@ jobs:
       - name: Build MSI installer
         run: dotnet build installer/GetDevice.wixproj -c Release --no-restore
 
-      - name: Inspect MSI output paths
-        shell: cmd
+      - name: Package release artifacts
+        shell: pwsh
         run: |
-          dir /s installer\bin\Release
-          dir /s installer
+          $msi = Get-ChildItem -Recurse -Filter 'GetDevice.msi' | Select-Object -First 1 -ExpandProperty FullName
+          if (-not $msi) {
+            Write-Error "GetDevice.msi not found under repository"
+            exit 1
+          }
+          $out = Join-Path $env:GITHUB_WORKSPACE 'out'
+          New-Item -ItemType Directory -Path $out -Force | Out-Null
+          Copy-Item -LiteralPath $msi -Destination (Join-Path $out 'GetDevice.msi')
+          $hash = (Get-FileHash -LiteralPath $msi -Algorithm SHA256).Hash.ToUpperInvariant()
+          Set-Content -LiteralPath (Join-Path $out 'GetDevice.msi.sha256') -Value "$hash  GetDevice.msi"
+          Write-Host "Packaged MSI: $msi"
+          Write-Host "SHA256: $hash"
 
-      - name: Upload MSI artifact
+      - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: GetDevice-MSI
-          path: |
-            installer/bin/Release/**/*.msi
-            installer/**/bin/Release/**/GetDevice.msi
+          name: GetDevice-Release
+          path: out/**
           retention-days: 90
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            installer/bin/Release/**/*.msi
-            installer/**/bin/Release/**/GetDevice.msi
-          generate_release_notes: false
+          files: out/**
           draft: false
           prerelease: false
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
