@@ -103,7 +103,10 @@ public class SettingsViewModel : BaseViewModel
         set
         {
             if (value < 1024 || value > 65535)
+            {
+                HttpPortText = _httpPort.ToString();
                 return;
+            }
             if (SetProperty(ref _httpPort, value))
             {
                 var config = _configService.Load();
@@ -157,7 +160,7 @@ public class SettingsViewModel : BaseViewModel
         CloseCommand = new RelayCommand(_ => CloseRequested?.Invoke());
         ToggleServerCommand = new RelayCommand(_ =>
         {
-            if (IsHttpRunning)
+            if (_httpServerService.IsRunning)
                 _httpServerService.Stop();
             else
                 _httpServerService.Start(HttpPort);

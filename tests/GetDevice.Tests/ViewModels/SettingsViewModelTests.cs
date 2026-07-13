@@ -159,6 +159,7 @@ public class SettingsViewModelTests
         mockHttp.Verify(x => x.Start(8080), Times.Once);
 
         mockHttp.Raise(x => x.RunningChanged += null, mockHttp.Object, true);
+        mockHttp.Setup(x => x.IsRunning).Returns(true);
         vm.ToggleServerCommand.Execute(null);
         mockHttp.Verify(x => x.Stop(), Times.Once);
     }
