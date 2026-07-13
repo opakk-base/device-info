@@ -1,4 +1,4 @@
-name: Build and Release
+name: Release
 
 on:
   push:
@@ -22,17 +22,7 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
-      - name: Ensure dotnet tools are on PATH
-        shell: pwsh
-        run: |
-          $targetPath = Join-Path $env:USERPROFILE ".dotnet\tools"
-          $current = [Environment]::GetEnvironmentVariable("PATH", "Machine")
-          if ($current -notlike "*$targetPath*") {
-            [Environment]::SetEnvironmentVariable("PATH", "$current;$targetPath", "Machine")
-          }
-          echo "$targetPath" >> $env:GITHUB_PATH
-
-      - name: Install WiX Toolset
+      - name: Install WiX Toolset via dotnet tool
         run: dotnet tool install --global wix
 
       - name: Restore app dependencies
@@ -81,4 +71,4 @@ jobs:
           prerelease: false
           generate_release_notes: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT }}
