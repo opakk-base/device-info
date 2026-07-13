@@ -102,6 +102,8 @@ public class SettingsViewModel : BaseViewModel
         get => _httpPort;
         set
         {
+            if (value < 1024 || value > 65535)
+                return;
             if (SetProperty(ref _httpPort, value))
             {
                 var config = _configService.Load();

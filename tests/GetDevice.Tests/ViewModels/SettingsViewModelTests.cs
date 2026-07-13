@@ -183,6 +183,25 @@ public class SettingsViewModelTests
     }
 
     [Fact]
+    public void HttpPort_RejectsOutOfRangeValues()
+    {
+        var config = new AppConfig { HttpPort = 8080 };
+        var mockConfig = new Mock<IConfigService>();
+        mockConfig.Setup(c => c.Load()).Returns(config);
+
+        var vm = new SettingsViewModel(
+            Mock.Of<IPasswordService>(),
+            mockConfig.Object,
+            Mock.Of<IHttpServerService>());
+
+        vm.HttpPort = 80;
+        Assert.Equal(8080, vm.HttpPort);
+
+        vm.HttpPort = 70000;
+        Assert.Equal(8080, vm.HttpPort);
+    }
+
+    [Fact]
     public void ToggleHttp_StartsAndStopsServer()
     {
         var mockHttp = new Mock<IHttpServerService>();
