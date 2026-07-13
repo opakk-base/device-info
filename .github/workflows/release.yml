@@ -40,6 +40,12 @@ jobs:
       - name: Build MSI installer
         run: dotnet build installer/GetDevice.wixproj -c Release --no-restore
 
+      - name: Inspect MSI output paths
+        shell: cmd
+        run: |
+          dir /s installer\bin\Release
+          dir /s installer
+
       - name: Upload MSI artifact
         uses: actions/upload-artifact@v4
         with:
@@ -55,7 +61,7 @@ jobs:
           files: |
             installer/bin/Release/**/*.msi
             installer/**/bin/Release/**/GetDevice.msi
-          generate_release_notes: true
+          generate_release_notes: false
           draft: false
           prerelease: false
         env:
