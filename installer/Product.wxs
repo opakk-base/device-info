@@ -3,7 +3,7 @@
            Language="1033"
            Version="1.0.0.0"
            Manufacturer="GetDevice"
-           UpgradeCode="YOUR-GUID-HERE-0000-0000-0000-000000000000">
+           UpgradeCode="5E3D12B4-9C6A-4F8D-8A2E-1B7C3D4E5F60">
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of GetDevice is already installed." />
 
@@ -21,16 +21,16 @@
     </Directory>
 
     <DirectoryRef Id="INSTALLFOLDER">
-      <Component Id="GetDevice.exe" Bitness="always64" Guid="YOUR-GUID-HERE-0000-0000-0000-000000000001">
+      <Component Id="GetDevice.exe" Bitness="always64" Guid="A1B2C3D4-E5F6-4712-89AB-CDEF01234567">
         <File Id="GetDevice.exe" Source="$(var.GetDevice.TargetDir)\GetDevice.exe" KeyPath="yes" />
       </Component>
-      <Component Id="GetDevice.dll" Bitness="always64" Guid="YOUR-GUID-HERE-0000-0000-0000-000000000002">
+      <Component Id="GetDevice.dll" Bitness="always64" Guid="12345678-9ABC-4DEF-0123-456789ABCDEF">
         <File Id="GetDevice.dll" Source="$(var.GetDevice.TargetDir)\GetDevice.dll" KeyPath="yes" />
       </Component>
     </DirectoryRef>
 
     <DirectoryRef Id="ApplicationProgramsFolder">
-      <Component Id="Shortcut" Guid="YOUR-GUID-HERE-0000-0000-0000-000000000003">
+      <Component Id="Shortcut" Guid="FEDCBA98-7654-3210-FEDC-BA9876543210">
         <Shortcut Id="ApplicationStartMenuShortcut"
                   Name="GetDevice"
                   Description="GetDevice - Device Information Exporter"
