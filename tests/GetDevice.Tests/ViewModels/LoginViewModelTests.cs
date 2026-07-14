@@ -135,4 +135,68 @@ public class LoginViewModelTests
         Assert.False(vm.IsHttpRunning);
         Assert.Equal("Stopped", vm.HttpStatusText);
     }
+
+    [Fact]
+    public void HttpToggleText_ReturnsStop_WhenHttpRunning()
+    {
+        var mockPassword = new Mock<IPasswordService>();
+        mockPassword.Setup(p => p.IsDefaultPassword()).Returns(false);
+        var configMock = new Mock<IConfigService>();
+        configMock.Setup(c => c.Load()).Returns(new AppConfig());
+        var httpMock = new Mock<IHttpServerService>();
+        httpMock.Setup(h => h.IsRunning).Returns(true);
+
+        var vm = new LoginViewModel(mockPassword.Object, configMock.Object, httpMock.Object);
+
+        Assert.Equal("Stop", vm.HttpToggleText);
+    }
+
+    [Fact]
+    public void HttpToggleText_ReturnsStart_WhenHttpNotRunning()
+    {
+        var mockPassword = new Mock<IPasswordService>();
+        mockPassword.Setup(p => p.IsDefaultPassword()).Returns(false);
+        var configMock = new Mock<IConfigService>();
+        configMock.Setup(c => c.Load()).Returns(new AppConfig());
+        var httpMock = new Mock<IHttpServerService>();
+        httpMock.Setup(h => h.IsRunning).Returns(false);
+
+        var vm = new LoginViewModel(mockPassword.Object, configMock.Object, httpMock.Object);
+
+        Assert.Equal("Start", vm.HttpToggleText);
+    }
+
+    [Fact]
+    public void ToggleApiCommand_StopsServer_WhenHttpRunning()
+    {
+        var mockPassword = new Mock<IPasswordService>();
+        mockPassword.Setup(p => p.IsDefaultPassword()).Returns(false);
+        var configMock = new Mock<IConfigService>();
+        configMock.Setup(c => c.Load()).Returns(new AppConfig());
+        var httpMock = new Mock<IHttpServerService>();
+        httpMock.Setup(h => h.IsRunning).Returns(true);
+
+        var vm = new LoginViewModel(mockPassword.Object, configMock.Object, httpMock.Object);
+
+        vm.ToggleApiCommand.Execute(null);
+
+        httpMock.Verify(h => h.Stop(), Times.Once);
+    }
+
+    [Fact]
+    public void ToggleApiCommand_StartsServer_WhenHttpNotRunning()
+    {
+        var mockPassword = new Mock<IPasswordService>();
+        mockPassword.Setup(p => p.IsDefaultPassword()).Returns(false);
+        var configMock = new Mock<IConfigService>();
+        configMock.Setup(c => c.Load()).Returns(new AppConfig { HttpPort = 8080 });
+        var httpMock = new Mock<IHttpServerService>();
+        httpMock.Setup(h => h.IsRunning).Returns(false);
+
+        var vm = new LoginViewModel(mockPassword.Object, configMock.Object, httpMock.Object);
+
+        vm.ToggleApiCommand.Execute(null);
+
+        httpMock.Verify(h => h.Start(8080), Times.Once);
+    }
 }

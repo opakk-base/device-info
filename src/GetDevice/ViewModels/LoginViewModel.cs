@@ -50,6 +50,8 @@ public class LoginViewModel : BaseViewModel
 
     public ICommand LoginCommand { get; }
     public ICommand SkipChangePasswordCommand { get; }
+    public ICommand ToggleApiCommand { get; }
+    public string HttpToggleText => IsHttpRunning ? "Stop" : "Start";
 
     public LoginViewModel(IPasswordService passwordService, IConfigService configService, IHttpServerService httpServerService)
     {
@@ -62,6 +64,13 @@ public class LoginViewModel : BaseViewModel
         {
             Unsubscribe();
             LoginSucceeded?.Invoke();
+        });
+        ToggleApiCommand = new RelayCommand(_ =>
+        {
+            if (_httpServerService.IsRunning)
+                _httpServerService.Stop();
+            else
+                _httpServerService.Start(_configService.Load().HttpPort);
         });
         IsFirstLaunch = _passwordService.IsDefaultPassword();
 
@@ -76,6 +85,9 @@ public class LoginViewModel : BaseViewModel
             HttpStatusText = running
                 ? $"localhost:{_configService.Load().HttpPort}"
                 : "Stopped";
+            OnPropertyChanged(nameof(HttpToggleText));
+            if (System.Windows.Application.Current is not null)
+                CommandManager.InvalidateRequerySuggested();
         };
         _httpServerService.RunningChanged += _runningChangedHandler;
     }

@@ -63,4 +63,5 @@ nunit-*.xml
 *.log
 .DS_Store
 .superpowers/
+.opencode/
 docs/superpowers/

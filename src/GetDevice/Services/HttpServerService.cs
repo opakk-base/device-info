@@ -66,6 +66,18 @@ public class HttpServerService : IHttpServerService, IDisposable
             var request = context.Request;
             var response = context.Response;
 
+            // Handle preflight OPTIONS request for CORS and Private Network Access (PNA)
+            if (request.HttpMethod == "OPTIONS")
+            {
+                response.Headers.Add("Access-Control-Allow-Origin", "*");
+                response.Headers.Add("Access-Control-Allow-Methods", "GET, OPTIONS");
+                response.Headers.Add("Access-Control-Allow-Headers", "Content-Type");
+                response.Headers.Add("Access-Control-Allow-Private-Network", "true");
+                response.StatusCode = 204; // No Content
+                response.OutputStream.Close();
+                return;
+            }
+
             if (request.Url?.AbsolutePath == "/health")
             {
                 RespondJson(response, """{"status":"ok"}""");
@@ -93,6 +105,13 @@ public class HttpServerService : IHttpServerService, IDisposable
         response.ContentType = "application/json";
         response.ContentEncoding = Encoding.UTF8;
         response.ContentLength64 = buffer.Length;
+
+        // Add CORS and PNA headers
+        response.Headers.Add("Access-Control-Allow-Origin", "*");
+        response.Headers.Add("Access-Control-Allow-Methods", "GET, OPTIONS");
+        response.Headers.Add("Access-Control-Allow-Headers", "Content-Type");
+        response.Headers.Add("Access-Control-Allow-Private-Network", "true");
+
         response.OutputStream.Write(buffer, 0, buffer.Length);
         response.OutputStream.Close();
     }

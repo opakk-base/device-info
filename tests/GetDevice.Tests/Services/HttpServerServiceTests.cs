@@ -78,6 +78,43 @@ public class HttpServerServiceTests : IDisposable
         _service.Stop();
     }
 
+    [Fact]
+    public async Task OptionsRequest_Returns204WithCorsAndPnaHeaders()
+    {
+        _service.Start(9195);
+        Thread.Sleep(200);
+
+        using var client = new HttpClient();
+        var request = new HttpRequestMessage(HttpMethod.Options, "http://localhost:9195/getdevice");
+        using var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.True(response.Headers.Contains("Access-Control-Allow-Origin"));
+        Assert.Equal("*", response.Headers.GetValues("Access-Control-Allow-Origin").First());
+        Assert.True(response.Headers.Contains("Access-Control-Allow-Private-Network"));
+        Assert.Equal("true", response.Headers.GetValues("Access-Control-Allow-Private-Network").First());
+
+        _service.Stop();
+    }
+
+    [Fact]
+    public async Task GetRequest_ReturnsCorsAndPnaHeaders()
+    {
+        _service.Start(9196);
+        Thread.Sleep(200);
+
+        using var client = new HttpClient();
+        using var response = await client.GetAsync("http://localhost:9196/getdevice");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(response.Headers.Contains("Access-Control-Allow-Origin"));
+        Assert.Equal("*", response.Headers.GetValues("Access-Control-Allow-Origin").First());
+        Assert.True(response.Headers.Contains("Access-Control-Allow-Private-Network"));
+        Assert.Equal("true", response.Headers.GetValues("Access-Control-Allow-Private-Network").First());
+
+        _service.Stop();
+    }
+
     public void Dispose()
     {
         _service?.Dispose();
