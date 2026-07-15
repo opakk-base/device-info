@@ -2,6 +2,7 @@
 <Project Sdk="WixToolset.Sdk/7.0.0">
   <PropertyGroup>
     <OutputType>Package</OutputType>
+    <AcceptEula>wix7</AcceptEula>
     <OutputName>GetDevice</OutputName>
     <Platform>x64</Platform>
     <SuppressValidation>false</SuppressValidation>
