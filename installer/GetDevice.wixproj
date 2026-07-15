@@ -2,7 +2,6 @@
 <Project Sdk="WixToolset.Sdk/7.0.0">
   <PropertyGroup>
     <OutputType>Package</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
     <OutputName>GetDevice</OutputName>
     <Platform>x64</Platform>
     <SuppressValidation>false</SuppressValidation>
