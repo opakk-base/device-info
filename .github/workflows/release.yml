@@ -43,9 +43,9 @@ jobs:
       - name: Package release artifacts
         shell: pwsh
         run: |
-          $msi = Get-ChildItem -Recurse -Filter 'GetDevice.msi' | Select-Object -First 1 -ExpandProperty FullName
-          if (-not $msi) {
-            Write-Error "GetDevice.msi not found under repository"
+          $msi = Join-Path $env:GITHUB_WORKSPACE 'installer\bin\Release\GetDevice.msi'
+          if (-not (Test-Path -LiteralPath $msi)) {
+            Write-Error "MSI not found at $msi"
             exit 1
           }
           $out = Join-Path $env:GITHUB_WORKSPACE 'out'
