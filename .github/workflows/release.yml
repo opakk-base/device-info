@@ -69,12 +69,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag="${{ github.ref_name }}"
-          body="$tag"
-          
+
           gh release create "$tag" \
             --repo "${{ github.repository }}" \
             --title "$tag" \
-            --notes "$body" \
+            --generate-notes \
             out/*
           
           echo "Created release for $tag"
