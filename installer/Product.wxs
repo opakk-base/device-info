@@ -11,14 +11,12 @@
 
     <Property Id="ARPPRODUCTICON" Value="icon.ico" />
 
-    <Directory Id="TARGETDIR" Name="SourceDir">
-      <Directory Id="ProgramFiles64Folder">
-        <Directory Id="INSTALLFOLDER" Name="GetDevice" />
-      </Directory>
-      <Directory Id="ProgramMenuFolder">
-        <Directory Id="ApplicationProgramsFolder" Name="GetDevice" />
-      </Directory>
-    </Directory>
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="GetDevice" />
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="GetDevice" />
+    </StandardDirectory>
 
     <DirectoryRef Id="INSTALLFOLDER">
       <Component Id="GetDevice.exe" Bitness="always64" Guid="A1B2C3D4-E5F6-4712-89AB-CDEF01234567">

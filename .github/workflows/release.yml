@@ -31,7 +31,7 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Install WiX Toolset via dotnet tool
-        run: dotnet tool install --global wix
+        run: dotnet tool install --global wix --version 7.0.0
 
       - name: Restore dependencies
         run: dotnet restore tests/GetDevice.Tests/GetDevice.Tests.csproj
