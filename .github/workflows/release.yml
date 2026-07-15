@@ -33,11 +33,8 @@ jobs:
       - name: Install WiX Toolset via dotnet tool
         run: dotnet tool install --global wix
 
-      - name: Restore app dependencies
+      - name: Restore dependencies
         run: dotnet restore src/GetDevice/GetDevice.csproj
-
-      - name: Restore test dependencies
-        run: dotnet restore tests/GetDevice.Tests/GetDevice.Tests.csproj
 
       - name: Build app
         run: dotnet build src/GetDevice/GetDevice.csproj -c Release --no-restore
