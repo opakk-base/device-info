@@ -23,7 +23,12 @@ public class ExportService : IExportService
     public string ExportToJson(DeviceInfo info, IEnumerable<string>? onlyFields = null)
     {
         var dict = info.ToDictionary(onlyFields);
-        return JsonSerializer.Serialize(dict, JsonOptions);
+        var wrapper = new Dictionary<string, object?>
+        {
+            ["success"] = true,
+            ["data"] = dict
+        };
+        return JsonSerializer.Serialize(wrapper, JsonOptions);
     }
 
     public async Task ExportToFileAsync(DeviceInfo info, string filePath, IEnumerable<string>? onlyFields = null)

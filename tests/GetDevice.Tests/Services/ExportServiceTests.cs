@@ -36,9 +36,12 @@ public class ExportServiceTests
         var json = service.ExportToJson(_testInfo);
         var doc = JsonDocument.Parse(json);
 
-        Assert.Equal(9, doc.RootElement.EnumerateObject().Count());
-        Assert.Equal("test-id", doc.RootElement.GetProperty("device_id").GetString());
-        Assert.Equal("192.168.1.100", doc.RootElement.GetProperty("ip_address").GetString());
+        Assert.Equal(2, doc.RootElement.EnumerateObject().Count());
+        Assert.True(doc.RootElement.GetProperty("success").GetBoolean());
+        var dataProp = doc.RootElement.GetProperty("data");
+        Assert.Equal(9, dataProp.EnumerateObject().Count());
+        Assert.Equal("test-id", dataProp.GetProperty("device_id").GetString());
+        Assert.Equal("192.168.1.100", dataProp.GetProperty("ip_address").GetString());
     }
 
     [Fact]
@@ -52,8 +55,11 @@ public class ExportServiceTests
         var doc = JsonDocument.Parse(json);
 
         Assert.Equal(2, doc.RootElement.EnumerateObject().Count());
-        Assert.True(doc.RootElement.TryGetProperty("hostname", out _));
-        Assert.True(doc.RootElement.TryGetProperty("os", out _));
+        Assert.True(doc.RootElement.GetProperty("success").GetBoolean());
+        var dataProp = doc.RootElement.GetProperty("data");
+        Assert.Equal(2, dataProp.EnumerateObject().Count());
+        Assert.True(dataProp.TryGetProperty("hostname", out _));
+        Assert.True(dataProp.TryGetProperty("os", out _));
     }
 
     [Fact]
@@ -69,7 +75,9 @@ public class ExportServiceTests
             await service.ExportToFileAsync(_testInfo, tempFile);
             var content = await File.ReadAllTextAsync(tempFile);
             var doc = JsonDocument.Parse(content);
-            Assert.Equal("PC-1", doc.RootElement.GetProperty("device_name").GetString());
+            Assert.True(doc.RootElement.GetProperty("success").GetBoolean());
+            var dataProp = doc.RootElement.GetProperty("data");
+            Assert.Equal("PC-1", dataProp.GetProperty("device_name").GetString());
         }
         finally
         {
@@ -94,6 +102,8 @@ public class ExportServiceTests
         var json = service.ExportToJsonFromCurrent();
         var doc = JsonDocument.Parse(json);
 
-        Assert.Equal(2, doc.RootElement.EnumerateObject().Count());
+        Assert.True(doc.RootElement.GetProperty("success").GetBoolean());
+        var dataProp = doc.RootElement.GetProperty("data");
+        Assert.Equal(2, dataProp.EnumerateObject().Count());
     }
 }

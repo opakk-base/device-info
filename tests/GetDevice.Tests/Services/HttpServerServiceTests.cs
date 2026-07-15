@@ -14,7 +14,7 @@ public class HttpServerServiceTests : IDisposable
     {
         _mockExport = new Mock<IExportService>();
         _mockExport.Setup(e => e.ExportToJsonFromCurrent())
-                   .Returns("""{"hostname":"test-pc","os":"Windows 11"}""");
+                   .Returns("""{"success":true,"data":{"hostname":"test-pc","os":"Windows 11"}}""");
 
         _service = new HttpServerService(_mockExport.Object);
     }
@@ -74,6 +74,8 @@ public class HttpServerServiceTests : IDisposable
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         var body = await response.Content.ReadAsStringAsync();
         Assert.Contains("not found", body);
+        Assert.Contains("success", body);
+        Assert.Contains("false", body);
 
         _service.Stop();
     }

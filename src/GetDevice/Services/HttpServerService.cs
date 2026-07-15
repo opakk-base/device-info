@@ -90,7 +90,7 @@ public class HttpServerService : IHttpServerService, IDisposable
             else
             {
                 response.StatusCode = 404;
-                RespondJson(response, """{"error":"not found"}""");
+                RespondJson(response, """{"success":false,"error":"not found"}""");
             }
         }
         catch
