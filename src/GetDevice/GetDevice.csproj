@@ -8,6 +8,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <AssemblyName>GetDevice</AssemblyName>
     <RootNamespace>GetDevice</RootNamespace>
   </PropertyGroup>
