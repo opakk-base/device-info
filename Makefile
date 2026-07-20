@@ -18,7 +18,7 @@ release:
 	dotnet test tests/GetDevice.Tests/GetDevice.Tests.csproj -c Release
 
 msi:
-	dotnet build installer/GetDevice.wixproj -c Release
+	powershell -Command "$$v = (Get-Content version.json | ConvertFrom-Json).version; dotnet publish src/GetDevice/GetDevice.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true; dotnet build installer/GetDevice.wixproj -c Release -p:Version=$$v.0"
 
 clean:
 	dotnet clean src/GetDevice/GetDevice.csproj

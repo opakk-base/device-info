@@ -129,7 +129,7 @@ public partial class App : System.Windows.Application
         _trayIcon = new System.Windows.Forms.NotifyIcon
         {
             Icon = System.Drawing.Icon.ExtractAssociatedIcon(
-                System.Reflection.Assembly.GetExecutingAssembly().Location),
+                Environment.ProcessPath!),
             Text = "GetDevice",
             Visible = true
         };

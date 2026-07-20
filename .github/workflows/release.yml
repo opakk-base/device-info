@@ -5,6 +5,11 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (overrides version.json)"
+        required: false
+        type: string
 
 jobs:
   build:
@@ -16,6 +21,35 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version
+        id: version
+        shell: pwsh
+        run: |
+          $versionJson = Get-Content -Raw version.json | ConvertFrom-Json
+          $inputVersion = "${{ github.event.inputs.version }}"
+          if ($inputVersion) {
+            $version = $inputVersion
+          } else {
+            $version = $versionJson.version
+          }
+          Write-Host "Version: $version"
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "wix_version=$version.0" >> $env:GITHUB_OUTPUT
+
+      - name: Validate tag
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          $expected = "v${{ steps.version.outputs.version }}"
+          $actual = "${{ github.ref_name }}"
+          if ($expected -ne $actual) {
+            Write-Error "Tag mismatch: expected '$expected' but got '$actual'. Update version.json to match the tag."
+            exit 1
+          }
+          Write-Host "Tag validation passed: $actual"
 
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
@@ -42,12 +76,53 @@ jobs:
       - name: Run tests
         run: dotnet test tests/GetDevice.Tests/GetDevice.Tests.csproj -c Release --no-restore
 
+      - name: Publish self-contained app
+        run: dotnet publish src/GetDevice/GetDevice.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true --no-restore
+
       - name: Build MSI installer
-        run: dotnet build installer/GetDevice.wixproj -c Release --no-restore
+        run: dotnet build installer/GetDevice.wixproj -c Release -p:Version=${{ steps.version.outputs.wix_version }} --no-restore
+
+      - name: Generate release notes
+        shell: bash
+        run: |
+          set -e
+
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="v${VERSION}"
+
+          LAST_TAG=$(git tag --sort=-creatordate | grep -E '^v[0-9]' | head -1 | tr -d '\n' || echo "")
+
+          if [ -n "$LAST_TAG" ]; then
+            RANGE="${LAST_TAG}..HEAD"
+          else
+            RANGE="HEAD"
+          fi
+
+          NOTES_FILE="release-notes.md"
+
+          echo "# GetDevice ${VERSION}" > "$NOTES_FILE"
+          echo "" >> "$NOTES_FILE"
+
+          echo "## Features" >> "$NOTES_FILE"
+          git log "$RANGE" --no-merges --pretty=format:"- %s (%h)" 2>/dev/null | grep -iE "^- feat:" >> "$NOTES_FILE" || echo "_None_" >> "$NOTES_FILE"
+          echo "" >> "$NOTES_FILE"
+
+          echo "## Bug Fixes" >> "$NOTES_FILE"
+          git log "$RANGE" --no-merges --pretty=format:"- %s (%h)" 2>/dev/null | grep -iE "^- fix:" >> "$NOTES_FILE" || echo "_None_" >> "$NOTES_FILE"
+          echo "" >> "$NOTES_FILE"
+
+          echo "## Other" >> "$NOTES_FILE"
+          git log "$RANGE" --no-merges --pretty=format:"- %s (%h)" 2>/dev/null | grep -ivE "^- (feat:|fix:)" | grep -v "^$" >> "$NOTES_FILE" || echo "_None_" >> "$NOTES_FILE"
+
+          echo "Generated release notes:"
+          cat "$NOTES_FILE"
+
+          echo "notes_file=$NOTES_FILE" >> "$GITHUB_ENV"
 
       - name: Package release artifacts
         shell: pwsh
         run: |
+          $version = "${{ steps.version.outputs.version }}"
           $msi = Get-ChildItem -Path (Join-Path $env:GITHUB_WORKSPACE 'installer') -Recurse -Filter 'GetDevice.msi' | Select-Object -First 1 -ExpandProperty FullName
           if (-not $msi) {
             Write-Error "GetDevice.msi not found under installer/"
@@ -55,10 +130,11 @@ jobs:
           }
           $out = Join-Path $env:GITHUB_WORKSPACE 'out'
           New-Item -ItemType Directory -Path $out -Force | Out-Null
-          Copy-Item -LiteralPath $msi -Destination (Join-Path $out 'GetDevice.msi')
+          $msiName = "GetDevice-$version.msi"
+          Copy-Item -LiteralPath $msi -Destination (Join-Path $out $msiName)
           $hash = (Get-FileHash -LiteralPath $msi -Algorithm SHA256).Hash.ToUpperInvariant()
-          Set-Content -LiteralPath (Join-Path $out 'GetDevice.msi.sha256') -Value "$hash  GetDevice.msi"
-          Write-Host "Packaged MSI: $msi"
+          Set-Content -LiteralPath (Join-Path $out "$msiName.sha256") -Value "$hash  $msiName"
+          Write-Host "Packaged MSI: $msiName"
           Write-Host "SHA256: $hash"
 
       - name: Upload release artifacts
@@ -71,14 +147,14 @@ jobs:
       - name: Create GitHub Release
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.PAT }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          tag="${{ github.ref_name }}"
+          tag="v${{ steps.version.outputs.version }}"
 
           gh release create "$tag" \
             --repo "${{ github.repository }}" \
-            --title "$tag" \
-            --generate-notes \
+            --title "GetDevice ${{ steps.version.outputs.version }}" \
+            --notes-file "${{ env.notes_file }}" \
             out/*
-          
+
           echo "Created release for $tag"
